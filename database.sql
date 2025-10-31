@@ -6,12 +6,12 @@
 -- Thời gian đã tạo: Th3 02, 2025 lúc 03:02 AM
 -- Phiên bản máy phục vụ: 8.2.0
 -- Phiên bản PHP: 8.2.27
-DROP DATABASE IF EXISTS ShopApp;
+DROP DATABASE IF EXISTS salesmanagement;
 -- Nếu cơ sở dữ liệu ShopApp chưa tồn tại, thực hiện câu lệnh CREATE DATABASE
-CREATE DATABASE IF NOT EXISTS ShopApp;
+CREATE DATABASE IF NOT EXISTS salesmanagement;
 
 -- Sử dụng cơ sở dữ liệu ShopApp
-USE ShopApp;
+USE salesmanagement;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";

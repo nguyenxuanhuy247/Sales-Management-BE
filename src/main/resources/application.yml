@@ -2,15 +2,10 @@ server:
   port: 8088  
 spring:
   datasource:
-    url: jdbc:mariadb://localhost:3306/shopapp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mariadb://localhost:3306/salesmanagement?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     driver-class-name: org.mariadb.jdbc.Driver
     username: root
     password: 123456
-#    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/ShopApp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-#    #url: ${SPRING_DATASOURCE_URL:jdbc:mysql://ubuntu-server-01.local:3399/ShopApp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    username: root
-#    password: ${MYSQL_ROOT_PASSWORD:Abc123456789@}
   jpa:
     show-sql: true
     hibernate:
@@ -56,7 +51,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       #transaction-id-prefix: tx.
       properties:
-        "[spring.json.type.mapping]": category:com.project.shopapp.models.Category
+        "[spring.json.type.mapping]": category:com.project.salesmanagement.models.Category
     consumer:
       value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   security:
