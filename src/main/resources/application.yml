@@ -43,7 +43,7 @@ spring:
   data:
     redis:
       #spring.data.redis.use-redis-cache
-      use-redis-cache: false
+      use-redis-cache: true
       host: ${REDIS_HOST:localhost} # Default to 'localhost' if not provided
       #host: ${REDIS_HOST:ubuntu-server-01.local} # Default to 'localhost' if not provided
       port: ${REDIS_PORT:6379}      # Default to 6379 if not provided
