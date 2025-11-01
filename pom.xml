@@ -12,7 +12,7 @@
     <artifactId>demo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Sales Management</name>
-    <description>Demo project for Spring Boot</description>
+    <description>Ứng dụng quản lý bán hàng</description>
     <properties>
         <java.version>21</java.version>
     </properties>

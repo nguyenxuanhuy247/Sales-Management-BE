@@ -13,11 +13,12 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+### Không commit những file có đuôi sau ###
 .idea
 *.iws
 *.iml
 *.ipr
+*.log
 
 ### NetBeans ###
 /nbproject/private/

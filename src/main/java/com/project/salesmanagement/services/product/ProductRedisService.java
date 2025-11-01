@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.salesmanagement.responses.product.ProductResponse;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +31,11 @@ public class ProductRedisService implements IProductRedisService {
     }
 
     @Override
-    public List<ProductResponse> getAllProducts(String keyword, Long categoryId, PageRequest pageRequest) throws JsonProcessingException {
-
-        if (useRedisCache == false) {
+    public List<ProductResponse> getAllProducts(String keyword,
+                                                Long categoryId,
+                                                PageRequest pageRequest
+    ) throws JsonProcessingException {
+        if (!useRedisCache) {
             return null;
         }
         String key = this.getKeyFrom(keyword, categoryId, pageRequest);

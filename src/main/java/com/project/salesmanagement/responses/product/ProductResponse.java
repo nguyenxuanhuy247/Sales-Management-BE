@@ -26,7 +26,6 @@ public class ProductResponse extends BaseResponse {
     private Float price;
     private String thumbnail;
     private String description;
-    // Thêm trường totalPages
     private int totalPages;
 
     @JsonProperty("product_images")
@@ -40,6 +39,7 @@ public class ProductResponse extends BaseResponse {
 
     @JsonProperty("category_id")
     private Long categoryId;
+
     public static ProductResponse fromProduct(Product product) {
         List<Comment> comments = product.getComments()
                 .stream()

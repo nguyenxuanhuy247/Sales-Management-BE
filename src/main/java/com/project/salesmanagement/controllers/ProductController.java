@@ -4,7 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.javafaker.Faker;
 import com.project.salesmanagement.components.LocalizationUtils;
 import com.project.salesmanagement.components.SecurityUtils;
-import com.project.salesmanagement.dtos.*;
+import com.project.salesmanagement.dtos.ProductDTO;
+import com.project.salesmanagement.dtos.ProductImageDTO;
 import com.project.salesmanagement.models.Product;
 import com.project.salesmanagement.models.ProductImage;
 import com.project.salesmanagement.models.User;
@@ -17,6 +18,7 @@ import com.project.salesmanagement.utils.FileUtils;
 import com.project.salesmanagement.utils.MessageKeys;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +33,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -47,15 +50,68 @@ public class ProductController {
     private final LocalizationUtils localizationUtils;
     private final IProductRedisService productRedisService;
     private final SecurityUtils securityUtils;
-    @PostMapping("")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
+    /// GET http://localhost:8088/v1/api/products
+    @GetMapping("")
+    public ResponseEntity<ResponseObject> getProducts(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0", name = "category_id") Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit
+    ) throws JsonProcessingException {
+        int totalPages = 0;
+        //productRedisService.clear();
+        // Tạo Pageable từ thông tin trang và số bản ghi
+        PageRequest pageRequest = PageRequest.of(page, limit,
+                Sort.by("updatedAt").descending()
+//                Sort.by("id").ascending()
+        );
+
+        logger.info(String.format("keyword = %s, category_id = %d, page = %d," +
+                " limit = %d", keyword, categoryId, page, limit));
+
+        List<ProductResponse> productResponses = productRedisService
+                .getAllProducts(keyword, categoryId, pageRequest);
+        if (productResponses != null && !productResponses.isEmpty()) {
+            totalPages = productResponses.get(0).getTotalPages();
+        }
+        if (productResponses == null) {
+            Page<ProductResponse> productPage = productService
+                    .getAllProducts(keyword, categoryId, pageRequest);
+            // Lấy tổng số trang
+            totalPages = productPage.getTotalPages();
+            productResponses = productPage.getContent();
+            // Bổ sung totalPages vào các đối tượng ProductResponse
+            for (ProductResponse product : productResponses) {
+                product.setTotalPages(totalPages);
+            }
+            productRedisService.saveAllProducts(
+                    productResponses,
+                    keyword,
+                    categoryId,
+                    pageRequest
+            );
+        }
+        ProductListResponse productListResponse = ProductListResponse
+                .builder()
+                .products(productResponses)
+                .totalPages(totalPages)
+                .build();
+        return ResponseEntity.ok().body(ResponseObject.builder()
+                .message("Get products successfully")
+                .status(HttpStatus.OK)
+                .data(productListResponse)
+                .build());
+    }
 
     /// POST http://localhost:8088/v1/api/products
+    @PostMapping("")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> createProduct(
             @Valid @RequestBody ProductDTO productDTO,
             BindingResult result
     ) throws Exception {
-        if(result.hasErrors()) {
+        if (result.hasErrors()) {
             List<String> errorMessages = result.getFieldErrors()
                     .stream()
                     .map(FieldError::getDefaultMessage)
@@ -86,7 +142,7 @@ public class ProductController {
     ) throws Exception {
         Product existingProduct = productService.getProductById(productId);
         files = files == null ? new ArrayList<MultipartFile>() : files;
-        if(files.size() > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
+        if (files.size() > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
             return ResponseEntity.badRequest().body(
                     ResponseObject.builder()
                             .message(localizationUtils
@@ -96,11 +152,11 @@ public class ProductController {
         }
         List<ProductImage> productImages = new ArrayList<>();
         for (MultipartFile file : files) {
-            if(file.getSize() == 0) {
+            if (file.getSize() == 0) {
                 continue;
             }
             // Kiểm tra kích thước file và định dạng
-            if(file.getSize() > 10 * 1024 * 1024) { // Kích thước > 10MB
+            if (file.getSize() > 10 * 1024 * 1024) { // Kích thước > 10MB
                 return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
                         .body(ResponseObject.builder()
                                 .message(localizationUtils
@@ -109,7 +165,7 @@ public class ProductController {
                                 .build());
             }
             String contentType = file.getContentType();
-            if(contentType == null || !contentType.startsWith("image/")) {
+            if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                         .body(ResponseObject.builder()
                                 .message(localizationUtils
@@ -130,15 +186,16 @@ public class ProductController {
         }
 
         return ResponseEntity.ok().body(ResponseObject.builder()
-                        .message("Upload image successfully")
-                        .status(HttpStatus.CREATED)
-                        .data(productImages)
+                .message("Upload image successfully")
+                .status(HttpStatus.CREATED)
+                .data(productImages)
                 .build());
     }
+
     @GetMapping("/images/{imageName}")
     public ResponseEntity<?> viewImage(@PathVariable String imageName) {
         try {
-            java.nio.file.Path imagePath = Paths.get("uploads/"+imageName);
+            java.nio.file.Path imagePath = Paths.get("uploads/" + imageName);
             UrlResource resource = new UrlResource(imagePath.toUri());
 
             if (resource.exists()) {
@@ -158,59 +215,6 @@ public class ProductController {
         }
     }
 
-    /// GET http://localhost:8088/v1/api/products
-    @GetMapping("")
-    public ResponseEntity<ResponseObject> getProducts(
-            @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "0", name = "category_id") Long categoryId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit
-    ) throws JsonProcessingException {
-        int totalPages = 0;
-        //productRedisService.clear();
-        // Tạo Pageable từ thông tin trang và giới hạn
-        PageRequest pageRequest = PageRequest.of(
-                page,
-                limit,
-                //Sort.by("createdAt").descending()
-                Sort.by("id").ascending()
-        );
-
-        logger.info(String.format("keyword = %s, category_id = %d, page = %d, limit = %d",
-                keyword, categoryId, page, limit));
-        List<ProductResponse> productResponses = productRedisService
-                .getAllProducts(keyword, categoryId, pageRequest);
-        if (productResponses!=null && !productResponses.isEmpty()) {
-            totalPages = productResponses.get(0).getTotalPages();
-        }
-        if(productResponses == null) {
-            Page<ProductResponse> productPage = productService
-                    .getAllProducts(keyword, categoryId, pageRequest);
-            // Lấy tổng số trang
-            totalPages = productPage.getTotalPages();
-            productResponses = productPage.getContent();
-            // Bổ sung totalPages vào các đối tượng ProductResponse
-            for (ProductResponse product : productResponses) {
-                product.setTotalPages(totalPages);
-            }
-            productRedisService.saveAllProducts(
-                    productResponses,
-                    keyword,
-                    categoryId,
-                    pageRequest
-            );
-        }
-        ProductListResponse productListResponse = ProductListResponse
-                .builder()
-                .products(productResponses)
-                .totalPages(totalPages)
-                .build();
-        return ResponseEntity.ok().body(ResponseObject.builder()
-                .message("Get products successfully")
-                .status(HttpStatus.OK)
-                .data(productListResponse)
-                .build());
-    }
     //http://localhost:8088/api/v1/products/6
     @GetMapping("/{id}")
     public ResponseEntity<ResponseObject> getProductById(
@@ -218,12 +222,13 @@ public class ProductController {
     ) throws Exception {
         Product existingProduct = productService.getProductById(productId);
         return ResponseEntity.ok(ResponseObject.builder()
-                        .data(ProductResponse.fromProduct(existingProduct))
-                        .message("Get detail product successfully")
-                        .status(HttpStatus.OK)
+                .data(ProductResponse.fromProduct(existingProduct))
+                .message("Get detail product successfully")
+                .status(HttpStatus.OK)
                 .build());
 
     }
+
     @GetMapping("/by-ids")
     public ResponseEntity<ResponseObject> getProductsByIds(@RequestParam("ids") String ids) {
         //eg: 1,3,5,7
@@ -242,7 +247,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")})
     public ResponseEntity<ResponseObject> deleteProduct(@PathVariable long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ResponseObject.builder()
@@ -251,35 +256,36 @@ public class ProductController {
                 .status(HttpStatus.OK)
                 .build());
     }
+
     //@PostMapping("/generateFakeProducts")
     private ResponseEntity<ResponseObject> generateFakeProducts() throws Exception {
         Faker faker = new Faker();
         for (int i = 0; i < 1_000_000; i++) {
             String productName = faker.commerce().productName();
-            if(productService.existsByName(productName)) {
+            if (productService.existsByName(productName)) {
                 continue;
             }
             ProductDTO productDTO = ProductDTO.builder()
                     .name(productName)
-                    .price((float)faker.number().numberBetween(10, 90_000_000))
+                    .price((float) faker.number().numberBetween(10, 90_000_000))
                     .description(faker.lorem().sentence())
                     .thumbnail("")
-                    .categoryId((long)faker.number().numberBetween(2, 5))
+                    .categoryId((long) faker.number().numberBetween(2, 5))
                     .build();
             productService.createProduct(productDTO);
         }
         return ResponseEntity.ok(ResponseObject.builder()
-                        .message("Insert fake products succcessfully")
-                        .data(null)
-                        .status(HttpStatus.OK)
+                .message("Insert fake products succcessfully")
+                .data(null)
+                .status(HttpStatus.OK)
                 .build());
     }
-    
+
     //update a product
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     //@SecurityRequirement(name="bearer-key")
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")})
     public ResponseEntity<ResponseObject> updateProduct(
             @PathVariable long id,
             @RequestBody ProductDTO productDTO) throws Exception {
@@ -302,6 +308,7 @@ public class ProductController {
                 .status(HttpStatus.OK)
                 .build());
     }
+
     @PostMapping("/unlike/{productId}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> unlikeProduct(@PathVariable Long productId) throws Exception {
@@ -313,6 +320,7 @@ public class ProductController {
                 .status(HttpStatus.OK)
                 .build());
     }
+
     @PostMapping("/favorite-products")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> findFavoriteProductsByUserId() throws Exception {
@@ -324,6 +332,7 @@ public class ProductController {
                 .status(HttpStatus.OK)
                 .build());
     }
+
     @PostMapping("/generateFakeLikes")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> generateFakeLikes() throws Exception {
