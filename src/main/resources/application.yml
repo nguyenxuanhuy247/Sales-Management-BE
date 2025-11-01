@@ -1,5 +1,5 @@
 server:
-  port: 8088  
+  port: 8088
 spring:
   datasource:
     url: jdbc:mariadb://localhost:3306/salesmanagement?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
@@ -27,14 +27,6 @@ spring:
     basename: i18n/messages
     encoding: UTF-8
     default-locale: en
-  #flyway
-  # Đường dẫn tới thư mục chứa các script Flyway
-  flyway:
-    locations: classpath:/db/migration,classpath:/dev/db/migration
-    #Phiên bản baseline sẽ = 1 và không thực hiện bất kỳ thay đổi nào trong DB
-    baseline-on-migrate: true
-    baseline-version: 0
-    enabled: false
   data:
     redis:
       #spring.data.redis.use-redis-cache
@@ -42,18 +34,6 @@ spring:
       host: ${REDIS_HOST:localhost} # Default to 'localhost' if not provided
       #host: ${REDIS_HOST:ubuntu-server-01.local} # Default to 'localhost' if not provided
       port: ${REDIS_PORT:6379}      # Default to 6379 if not provided
-  kafka:
-    client:
-      dns:
-        lookup: use_dns_cache
-    bootstrap-servers: ${KAFKA_BROKER_SERVER:localhost}:${KAFKA_BROKER_PORT:9092}
-    producer:
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      #transaction-id-prefix: tx.
-      properties:
-        "[spring.json.type.mapping]": category:com.project.salesmanagement.models.Category
-    consumer:
-      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   security:
     oauth2:
       client:

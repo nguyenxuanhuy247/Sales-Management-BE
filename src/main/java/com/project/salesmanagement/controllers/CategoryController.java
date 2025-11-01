@@ -1,9 +1,7 @@
 package com.project.salesmanagement.controllers;
 
 import com.project.salesmanagement.components.LocalizationUtils;
-//import com.project.salesmanagement.components.converters.CategoryMessageConverter;
-import com.project.salesmanagement.components.converters.CategoryMessageConverter;
-import com.project.salesmanagement.dtos.*;
+import com.project.salesmanagement.dtos.CategoryDTO;
 import com.project.salesmanagement.models.Category;
 import com.project.salesmanagement.responses.ResponseObject;
 import com.project.salesmanagement.services.category.CategoryService;
@@ -12,7 +10,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -27,7 +24,6 @@ import java.util.List;
 public class CategoryController {
     private final CategoryService categoryService;
     private final LocalizationUtils localizationUtils;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -35,7 +31,7 @@ public class CategoryController {
     public ResponseEntity<ResponseObject> createCategory(
             @Valid @RequestBody CategoryDTO categoryDTO,
             BindingResult result) {
-        if(result.hasErrors()) {
+        if (result.hasErrors()) {
             List<String> errorMessages = result.getFieldErrors()
                     .stream()
                     .map(FieldError::getDefaultMessage)
@@ -48,8 +44,7 @@ public class CategoryController {
 
         }
         Category category = categoryService.createCategory(categoryDTO);
-        this.kafkaTemplate.send("insert-a-category", category);//producer
-        this.kafkaTemplate.setMessageConverter(new CategoryMessageConverter());
+
         return ResponseEntity.ok().body(ResponseObject.builder()
                 .message("Create category successfully")
                 .status(HttpStatus.OK)
@@ -60,21 +55,15 @@ public class CategoryController {
     //Hiện tất cả các categories
     @GetMapping("")
     public ResponseEntity<ResponseObject> getAllCategories(
-            @RequestParam("page")     int page,
-            @RequestParam("limit")    int limit
+            @RequestParam("page") int page,
+            @RequestParam("limit") int limit
     ) {
         List<Category> categories = categoryService.getAllCategories();
-        /*
-        this.kafkaTemplate.executeInTransaction(status -> {
-            categories.forEach(category -> kafkaTemplate.send("get-all-categories", category));
-            return null;
-        });
-         */
-//        this.kafkaTemplate.send("get-all-categories", categories);
+
         return ResponseEntity.ok(ResponseObject.builder()
-                        .message("Get list of categories successfully")
-                        .status(HttpStatus.OK)
-                        .data(categories)
+                .message("Get list of categories successfully")
+                .status(HttpStatus.OK)
+                .data(categories)
                 .build());
     }
 
@@ -84,11 +73,12 @@ public class CategoryController {
     ) {
         Category existingCategory = categoryService.getCategoryById(categoryId);
         return ResponseEntity.ok(ResponseObject.builder()
-                        .data(existingCategory)
-                        .message("Get category information successfully")
-                        .status(HttpStatus.OK)
+                .data(existingCategory)
+                .message("Get category information successfully")
+                .status(HttpStatus.OK)
                 .build());
     }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateCategory(
@@ -102,9 +92,10 @@ public class CategoryController {
                 .message(localizationUtils.getLocalizedMessage(MessageKeys.UPDATE_CATEGORY_SUCCESSFULLY))
                 .build());
     }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ResponseObject> deleteCategory(@PathVariable Long id) throws Exception{
+    public ResponseEntity<ResponseObject> deleteCategory(@PathVariable Long id) throws Exception {
         categoryService.deleteCategory(id);
         return ResponseEntity.ok(
                 ResponseObject.builder()
