@@ -21,11 +21,18 @@ public class ProductRedisService implements IProductRedisService {
     @Value("${spring.data.redis.use-redis-cache}")
     private boolean useRedisCache;
 
+    /**
+     * @usageNotes hàm này dùng để tạo ra một chuỗi key duy nhất dựa trên các tham số truy vấn nhằm lưu và truy xuất dữ liệu từ Redis cache.
+     * @params keyword : Chuôi tìm kiếm sản phẩm.
+     * @params categoryId : ID của danh mục sản phẩm.
+     * @params pageRequest : Thông tin phân trang bao gồm số trang, kích thước trang và hướng sắp xếp.
+     * @return Trả về một chuỗi key
+     */
     private String getKeyFrom(String keyword, Long categoryId, PageRequest pageRequest) {
         int pageNumber = pageRequest.getPageNumber();
         int pageSize = pageRequest.getPageSize();
         Sort sort = pageRequest.getSort();
-        String sortDirection = sort.getOrderFor("id").getDirection() == Sort.Direction.ASC ? "asc" : "desc";
+        String sortDirection = sort.getOrderFor("updatedAt").getDirection() == Sort.Direction.ASC ? "asc" : "desc";
         String key = String.format("all_products:%s:%d:%d:%d:%s", keyword, categoryId, pageNumber, pageSize, sortDirection);
         return key;
     }
@@ -34,6 +41,9 @@ public class ProductRedisService implements IProductRedisService {
     public List<ProductResponse> getAllProducts(String keyword,
                                                 Long categoryId,
                                                 PageRequest pageRequest
+    /** JsonProcessingException được sử dụng vì phương thức readValue và writeValueAsString của ObjectMapper
+     * có thể phát sinh lỗi khi chuyển đổi giữa JSON và Java object. Exception này giúp bắt và xử lý
+     * các lỗi liên quan đến việc parse hoặc serialize dữ liệu JSON. */
     ) throws JsonProcessingException {
         if (!useRedisCache) {
             return null;

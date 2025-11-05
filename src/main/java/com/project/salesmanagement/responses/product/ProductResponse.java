@@ -40,12 +40,22 @@ public class ProductResponse extends BaseResponse {
     @JsonProperty("category_id")
     private Long categoryId;
 
+    /**
+     * @usageNotes Chuyển đổi dữu liệu từ đối tượng Product sang ProductResponse
+     * @params product - đối tượng Product cần chuyển đổi.
+     * @returns ProductResponse - đối tượng phản hồi đã chuyển đổi.
+     */
     public static ProductResponse fromProduct(Product product) {
         List<Comment> comments = product.getComments()
+                /** stream() và collect(Collectors.toList()) được sử dụng để thực hiện các thao tác như sắp xếp, lọc, biến đổi,...*/
                 .stream()
                 .sorted(Comparator.comparing(Comment::getCreatedAt).reversed()) // Sort comments by createdAt in descending order
                 .collect(Collectors.toList());
+
         List<Favorite> favorites = product.getFavorites();
+
+        /** builder giúp khởi tạo đối tượng bằng cách chỉ định từng trường mong muốn mà không cần
+         * constructor dài hoặc nhiều setter. */
         ProductResponse productResponse = ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -58,6 +68,7 @@ public class ProductResponse extends BaseResponse {
                 .productImages(product.getProductImages())
                 .totalPages(0)
                 .build();
+
         productResponse.setCreatedAt(product.getCreatedAt());
         productResponse.setUpdatedAt(product.getUpdatedAt());
         return productResponse;
