@@ -25,9 +25,18 @@ public class ProductRedisService implements IProductRedisService {
         int pageNumber = pageRequest.getPageNumber();
         int pageSize = pageRequest.getPageSize();
         Sort sort = pageRequest.getSort();
-        String sortDirection = sort.getOrderFor("id").getDirection() == Sort.Direction.ASC ? "asc" : "desc";
-        String key = String.format("all_products:%s:%d:%d:%d:%s", keyword, categoryId, pageNumber, pageSize, sortDirection);
-        return key;
+        Sort.Order order = sort.getOrderFor("updatedAt");
+        String sortDirection;
+        if (order != null) {
+            sortDirection = order.getDirection() == Sort.Direction.ASC ? "asc" : "desc";
+        } else if (sort.iterator().hasNext()) {
+            Sort.Order firstOrder = sort.iterator().next();
+            sortDirection = firstOrder.getDirection() == Sort.Direction.ASC ? "asc" : "desc";
+        } else {
+            sortDirection = "asc";
+        }
+
+        return String.format("all_products:%s:%d:%d:%d:%s", keyword, categoryId, pageNumber, pageSize, sortDirection);
     }
 
     @Override

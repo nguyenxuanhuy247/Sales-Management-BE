@@ -1,7 +1,7 @@
 package com.project.salesmanagement.controllers;
-import com.github.javafaker.Faker;
+
 import com.project.salesmanagement.components.SecurityUtils;
-import com.project.salesmanagement.dtos.*;
+import com.project.salesmanagement.dtos.CommentDTO;
 import com.project.salesmanagement.models.User;
 import com.project.salesmanagement.responses.ResponseObject;
 import com.project.salesmanagement.responses.comment.CommentResponse;
@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -43,6 +42,7 @@ public class CommentController {
                 .data(commentResponses)
                 .build());
     }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> updateComment(
@@ -64,6 +64,7 @@ public class CommentController {
                         "Update comment successfully",
                         HttpStatus.OK, null));
     }
+
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> insertComment(
@@ -71,7 +72,7 @@ public class CommentController {
     ) {
         // Insert the new comment
         User loginUser = securityUtils.getLoggedInUser();
-        if(loginUser.getId() != commentDTO.getUserId()) {
+        if (loginUser.getId() != commentDTO.getUserId()) {
             return ResponseEntity.badRequest().body(
                     new ResponseObject(
                             "You cannot comment as another user",
@@ -85,6 +86,7 @@ public class CommentController {
                         .status(HttpStatus.OK)
                         .build());
     }
+
     @PostMapping("/generateFakeComments")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> generateFakeComments() throws Exception {
