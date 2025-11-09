@@ -61,17 +61,18 @@ public class ProductController {
     ) throws JsonProcessingException {
         int totalPages = 0;
         //productRedisService.clear();
-        // Tạo Pageable từ thông tin trang và số bản ghi
-        PageRequest pageRequest = PageRequest.of(page, limit,
-                Sort.by("updatedAt").descending()
-//                Sort.by("id").ascending()
-        );
+        // Tạo Pageable từ thông tin trang và số bản ghi, có thể  sắp xếp theo id : Sort.by("id").ascending()
+        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("updatedAt").ascending());
 
         logger.info(String.format("keyword = %s, category_id = %d, page = %d," +
                 " limit = %d", keyword, categoryId, page, limit));
 
         List<ProductResponse> productResponses = productRedisService
                 .getAllProducts(keyword, categoryId, pageRequest);
+        logger.info("Product responses: {}", productResponses);
+        logger.info(String.format("keyword = %s, category_id = %d, page = %d," +
+                " limit = %d", keyword, categoryId, page, limit));
+
         if (productResponses != null && !productResponses.isEmpty()) {
             totalPages = productResponses.get(0).getTotalPages();
         }
