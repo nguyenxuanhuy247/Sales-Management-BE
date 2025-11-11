@@ -17,20 +17,21 @@ import java.util.List;
 public class CategoryService implements ICategoryService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+
     @Override
     @Transactional
     public Category createCategory(CategoryDTO categoryDTO) {
         Category newCategory = Category
-                .builder()
-                .name(categoryDTO.getName())
-                .build();
+          .builder()
+          .name(categoryDTO.getName())
+          .build();
         return categoryRepository.save(newCategory);
     }
 
     @Override
     public Category getCategoryById(long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+          .orElseThrow(() -> new RuntimeException("Category not found"));
     }
 
     @Override
@@ -40,8 +41,10 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional
-    public Category updateCategory(long categoryId,
-                                   CategoryDTO categoryDTO) {
+    public Category updateCategory(
+      long categoryId,
+      CategoryDTO categoryDTO
+    ) {
         Category existingCategory = getCategoryById(categoryId);
         existingCategory.setName(categoryDTO.getName());
         categoryRepository.save(existingCategory);
@@ -52,14 +55,14 @@ public class CategoryService implements ICategoryService {
     @Transactional
     public Category deleteCategory(long id) throws Exception {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+          .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
 
         List<Product> products = productRepository.findByCategory(category);
         if (!products.isEmpty()) {
             throw new IllegalStateException("Cannot delete category with associated products");
         } else {
             categoryRepository.deleteById(id);
-            return  category;
+            return category;
         }
     }
 }

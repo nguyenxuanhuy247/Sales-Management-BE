@@ -33,18 +33,18 @@ public class ProductService implements IProductService {
     @Transactional
     public Product createProduct(ProductDTO productDTO) throws DataNotFoundException {
         Category existingCategory = categoryRepository
-                .findById(productDTO.getCategoryId())
-                .orElseThrow(() ->
-                        new DataNotFoundException(
-                                "Cannot find category with id: " + productDTO.getCategoryId()));
+          .findById(productDTO.getCategoryId())
+          .orElseThrow(() ->
+            new DataNotFoundException(
+              "Cannot find category with id: " + productDTO.getCategoryId()));
 
         Product newProduct = Product.builder()
-                .name(productDTO.getName())
-                .price(productDTO.getPrice())
-                .thumbnail(productDTO.getThumbnail())
-                .description(productDTO.getDescription())
-                .category(existingCategory)
-                .build();
+          .name(productDTO.getName())
+          .price(productDTO.getPrice())
+          .thumbnail(productDTO.getThumbnail())
+          .description(productDTO.getDescription())
+          .category(existingCategory)
+          .build();
         return productRepository.save(newProduct);
     }
 
@@ -66,7 +66,7 @@ public class ProductService implements IProductService {
         List<ProductImage> productImages = productImageRepository.findByProductId(product.getId());
 
         boolean isValid = currentThumbnail != null &&
-                productImages.stream().anyMatch(img -> img.getImageUrl().equals(currentThumbnail));
+          productImages.stream().anyMatch(img -> img.getImageUrl().equals(currentThumbnail));
 
         if (!isValid) {
             if (!productImages.isEmpty()) {
@@ -84,8 +84,10 @@ public class ProductService implements IProductService {
     }
 
     @Override
-    public Page<ProductResponse> getAllProducts(String keyword,
-                                                Long categoryId, PageRequest pageRequest) {
+    public Page<ProductResponse> getAllProducts(
+      String keyword,
+      Long categoryId, PageRequest pageRequest
+    ) {
         // Lấy danh sách sản phẩm theo trang (page), giới hạn (limit), và categoryId (nếu có)
         Page<Product> productsPage;
         productsPage = productRepository.searchProducts(categoryId, keyword, pageRequest);
@@ -98,10 +100,10 @@ public class ProductService implements IProductService {
         Product existingProduct = getProductById(id);
         if (existingProduct != null) {
             Category existingCategory = categoryRepository
-                    .findById(productDTO.getCategoryId())
-                    .orElseThrow(() ->
-                            new DataNotFoundException(
-                                    "Cannot find category with id: " + productDTO.getCategoryId()));
+              .findById(productDTO.getCategoryId())
+              .orElseThrow(() ->
+                new DataNotFoundException(
+                  "Cannot find category with id: " + productDTO.getCategoryId()));
 
             if (productDTO.getName() != null && !productDTO.getName().isEmpty()) {
                 existingProduct.setName(productDTO.getName());
@@ -142,23 +144,24 @@ public class ProductService implements IProductService {
     @Override
     @Transactional
     public ProductImage createProductImage(
-            Long productId,
-            ProductImageDTO productImageDTO) throws Exception {
+      Long productId,
+      ProductImageDTO productImageDTO
+    ) throws Exception {
         Product existingProduct = productRepository
-                .findById(productId)
-                .orElseThrow(() ->
-                        new DataNotFoundException(
-                                "Cannot find product with id: " + productImageDTO.getProductId()));
+          .findById(productId)
+          .orElseThrow(() ->
+            new DataNotFoundException(
+              "Cannot find product with id: " + productImageDTO.getProductId()));
         ProductImage newProductImage = ProductImage.builder()
-                .product(existingProduct)
-                .imageUrl(productImageDTO.getImageUrl())
-                .build();
+          .product(existingProduct)
+          .imageUrl(productImageDTO.getImageUrl())
+          .build();
         //Ko cho insert quá 5 ảnh cho 1 sản phẩm
         int size = productImageRepository.findByProductId(productId).size();
         if (size >= ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
             throw new InvalidParamException(
-                    "Number of images must be <= "
-                            + ProductImage.MAXIMUM_IMAGES_PER_PRODUCT);
+              "Number of images must be <= "
+                + ProductImage.MAXIMUM_IMAGES_PER_PRODUCT);
         }
         if (existingProduct.getThumbnail() == null) {
             existingProduct.setThumbnail(newProductImage.getImageUrl());
@@ -182,9 +185,9 @@ public class ProductService implements IProductService {
         } else {
             // Create a new favorite entry and save it
             Favorite favorite = Favorite.builder()
-                    .product(productRepository.findById(productId).orElse(null))
-                    .user(userRepository.findById(userId).orElse(null))
-                    .build();
+              .product(productRepository.findById(productId).orElse(null))
+              .user(userRepository.findById(userId).orElse(null))
+              .build();
             favoriteRepository.save(favorite);
         }
         // Return the liked product
@@ -219,8 +222,8 @@ public class ProductService implements IProductService {
         List<Product> favoriteProducts = productRepository.findFavoriteProductsByUserId(userId);
         // Convert Product entities to ProductResponse objects
         return favoriteProducts.stream()
-                .map(ProductResponse::fromProduct)
-                .collect(Collectors.toList());
+          .map(ProductResponse::fromProduct)
+          .collect(Collectors.toList());
     }
 
     @Override
@@ -244,9 +247,9 @@ public class ProductService implements IProductService {
             if (!favoriteRepository.existsByUserIdAndProductId(user.getId(), product.getId())) {
                 // Generate a fake favorite
                 Favorite favorite = Favorite.builder()
-                        .user(user)
-                        .product(product)
-                        .build();
+                  .user(user)
+                  .product(product)
+                  .build();
                 favorites.add(favorite);
             }
             if (favorites.size() >= batchSize) {
