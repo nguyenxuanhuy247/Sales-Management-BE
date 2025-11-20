@@ -13,6 +13,8 @@ import com.project.salesmanagement.services.orders.IOrderService;
 import com.project.salesmanagement.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -28,9 +30,80 @@ import java.util.List;
 @RequestMapping("${api.prefix}/orders")
 @RequiredArgsConstructor
 public class OrderController {
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
     private final IOrderService orderService;
     private final LocalizationUtils localizationUtils;
     private final SecurityUtils securityUtils;
+
+    // API Lấy danh sách đơn hàng
+    @GetMapping("/get-orders-by-keyword")
+    public ResponseEntity<ResponseObject> getOrdersByKeyword(
+      @RequestParam(defaultValue = "", required = false) String keyword,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int limit
+    ) {
+        PageRequest pageRequest = PageRequest.of(
+          page, limit,
+          Sort.by("id").ascending()
+        );
+        Page<OrderResponse> orderPage = orderService
+          .getOrdersByKeyword(keyword, pageRequest)
+          .map(OrderResponse::fromOrder);
+
+        OrderListResponse response = OrderListResponse.builder()
+          .orders(orderPage.getContent())
+          .totalPages(orderPage.getTotalPages())
+          .currentPage(page)
+          .build();
+
+        return ResponseEntity.ok().body(ResponseObject.builder()
+          .message("Get orders successfully")
+          .status(HttpStatus.OK)
+          .data(response)
+          .build());
+    }
+
+    // Lấy thông tin chi tiết đơn hàng
+    // GET http://localhost:8088/api/v1/orders/2
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseObject> getOrder(@Valid @PathVariable("id") Long orderId) {
+        Order existingOrder = orderService.getOrderById(orderId);
+        OrderResponse orderResponse = OrderResponse.fromOrder(existingOrder);
+        return ResponseEntity.ok(new ResponseObject(
+          "Get order successfully",
+          HttpStatus.OK,
+          orderResponse
+        ));
+    }
+
+    // Chỉnh sửa đơn hàng
+    //PUT http://localhost:8088/api/v1/orders/2
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseObject> updateOrder(
+      @Valid @PathVariable long id,
+      @Valid @RequestBody OrderDTO orderDTO) throws Exception {
+        Order order = orderService.updateOrder(id, orderDTO);
+        return ResponseEntity.ok(new ResponseObject("Update order successfully", HttpStatus.OK, order));
+    }
+
+    // Xóa đơn hàng (Xóa mềm)
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseObject> deleteOrder(@Valid @PathVariable Long id) {
+        //xóa mềm => cập nhật trường active = false
+        orderService.deleteOrder(id);
+        String message = localizationUtils.getLocalizedMessage(
+          MessageKeys.DELETE_ORDER_SUCCESSFULLY, id);
+        return ResponseEntity.ok(
+          ResponseObject.builder()
+            .message(message)
+            .build()
+        );
+    }
+
+
+    //=========================
 
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
@@ -73,28 +146,8 @@ public class OrderController {
                         .status(HttpStatus.OK)
                         .build());
     }
-    //GET http://localhost:8088/api/v1/orders/2
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseObject> getOrder(@Valid @PathVariable("id") Long orderId) {
-        Order existingOrder = orderService.getOrderById(orderId);
-        OrderResponse orderResponse = OrderResponse.fromOrder(existingOrder);
-        return ResponseEntity.ok(new ResponseObject(
-                "Get order successfully",
-                    HttpStatus.OK,
-                    orderResponse
-                ));
-    }
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    //PUT http://localhost:8088/api/v1/orders/2
-    //công việc của admin
-    public ResponseEntity<ResponseObject> updateOrder(
-            @Valid @PathVariable long id,
-            @Valid @RequestBody OrderDTO orderDTO) throws Exception {
 
-        Order order = orderService.updateOrder(id, orderDTO);
-        return ResponseEntity.ok(new ResponseObject("Update order successfully", HttpStatus.OK, order));
-    }
+
 
     @PutMapping("/cancel/{id}")
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -142,45 +195,7 @@ public class OrderController {
                         order)
         );
     }
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ResponseObject> deleteOrder(@Valid @PathVariable Long id) {
-        //xóa mềm => cập nhật trường active = false
-        orderService.deleteOrder(id);
-        String message = localizationUtils.getLocalizedMessage(
-                MessageKeys.DELETE_ORDER_SUCCESSFULLY, id);
-        return ResponseEntity.ok(
-                ResponseObject.builder()
-                        .message(message)
-                        .build()
-        );
-    }
-    @GetMapping("/get-orders-by-keyword")
-    public ResponseEntity<ResponseObject> getOrdersByKeyword(
-            @RequestParam(defaultValue = "", required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
-        PageRequest pageRequest = PageRequest.of(
-                page, limit,
-                Sort.by("id").ascending()
-        );
-        Page<OrderResponse> orderPage = orderService
-                .getOrdersByKeyword(keyword, pageRequest)
-                .map(OrderResponse::fromOrder);
 
-        OrderListResponse response = OrderListResponse.builder()
-                .orders(orderPage.getContent())
-                .totalPages(orderPage.getTotalPages())
-                .currentPage(page)
-                .build();
-
-        return ResponseEntity.ok().body(ResponseObject.builder()
-                .message("Get orders successfully")
-                .status(HttpStatus.OK)
-                .data(response)
-                .build());
-    }
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> updateOrderStatus(

@@ -25,6 +25,7 @@ public class CategoryController {
     private final CategoryService categoryService;
     private final LocalizationUtils localizationUtils;
 
+    // Lấy danh sách danh mục
     // GET http://localhost:8088/api/v1/categories
     @GetMapping("")
     public ResponseEntity<ResponseObject> getAllCategories(
@@ -42,9 +43,9 @@ public class CategoryController {
         );
     }
 
+    // Thêm mới 1 danh mục
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    //Nếu tham số truyền vào là 1 object thì sao ? => Data Transfer Object = Request Object
     public ResponseEntity<ResponseObject> createCategory(
       @Valid @RequestBody CategoryDTO categoryDTO,
       BindingResult result
@@ -70,18 +71,7 @@ public class CategoryController {
           .build());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseObject> getCategoryById(
-      @PathVariable("id") Long categoryId
-    ) {
-        Category existingCategory = categoryService.getCategoryById(categoryId);
-        return ResponseEntity.ok(ResponseObject.builder()
-          .data(existingCategory)
-          .message("Get category information successfully")
-          .status(HttpStatus.OK)
-          .build());
-    }
-
+    // Cập nhật danh mục
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateCategory(
@@ -96,6 +86,7 @@ public class CategoryController {
           .build());
     }
 
+    //  Xóa mềm 1 danh mục
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> deleteCategory(@PathVariable Long id) throws Exception {
@@ -105,6 +96,19 @@ public class CategoryController {
             .status(HttpStatus.OK)
             .message("Delete category successfully")
             .build());
+    }
+
+    // Lấy thông tin chi tiết 1 danh mục
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseObject> getCategoryById(
+      @PathVariable("id") Long categoryId
+    ) {
+        Category existingCategory = categoryService.getCategoryById(categoryId);
+        return ResponseEntity.ok(ResponseObject.builder()
+          .data(existingCategory)
+          .message("Get category information successfully")
+          .status(HttpStatus.OK)
+          .build());
     }
 }
 

@@ -51,6 +51,7 @@ public class ProductController {
     private final IProductRedisService productRedisService;
     private final SecurityUtils securityUtils;
 
+    // Lấy danh sách sản phẩm
     // GET http://localhost:8088/v1/api/products
     @GetMapping("")
     public ResponseEntity<ResponseObject> getProducts(
@@ -61,8 +62,8 @@ public class ProductController {
     ) throws JsonProcessingException {
         int totalPages = 0;
         //productRedisService.clear();
-        // Tạo Pageable từ thông tin trang và số bản ghi, có thể  sắp xếp theo id : Sort.by("id").ascending()
-        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("updatedAt").ascending());
+        // Tạo Pageable từ thông tin trang và số bản ghi, có thể  sắp xếp theo id : Sort.by("updatedAt").ascending()
+        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("id").ascending());
 
         logger.info(String.format("keyword = %s, category_id = %d, page = %d," +
           " limit = %d", keyword, categoryId, page, limit));
@@ -105,6 +106,7 @@ public class ProductController {
         );
     }
 
+    // Lấy thông tin chi tiết 1 sản phẩm
     // GET http://localhost:8088/api/v1/products/6
     @GetMapping("/{id}")
     public ResponseEntity<ResponseObject> getProductById(

@@ -30,6 +30,18 @@ public class ProductService implements IProductService {
     private final FavoriteRepository favoriteRepository;
 
     @Override
+    public Page<ProductResponse> getAllProducts(
+      String keyword,
+      Long categoryId,
+      PageRequest pageRequest
+    ) {
+        // Lấy danh sách sản phẩm theo trang (page), giới hạn (limit), và categoryId (nếu có)
+        Page<Product> productsPage;
+        productsPage = productRepository.searchProducts(categoryId, keyword, pageRequest);
+        return productsPage.map(ProductResponse::fromProduct);
+    }
+
+    @Override
     @Transactional
     public Product createProduct(ProductDTO productDTO) throws DataNotFoundException {
         Category existingCategory = categoryRepository
@@ -81,17 +93,6 @@ public class ProductService implements IProductService {
     @Override
     public List<Product> findProductsByIds(List<Long> productIds) {
         return productRepository.findProductsByIds(productIds);
-    }
-
-    @Override
-    public Page<ProductResponse> getAllProducts(
-      String keyword,
-      Long categoryId, PageRequest pageRequest
-    ) {
-        // Lấy danh sách sản phẩm theo trang (page), giới hạn (limit), và categoryId (nếu có)
-        Page<Product> productsPage;
-        productsPage = productRepository.searchProducts(categoryId, keyword, pageRequest);
-        return productsPage.map(ProductResponse::fromProduct);
     }
 
     @Override

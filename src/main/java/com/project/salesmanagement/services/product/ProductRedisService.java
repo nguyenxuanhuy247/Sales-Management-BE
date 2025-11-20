@@ -32,7 +32,7 @@ public class ProductRedisService implements IProductRedisService {
         int pageNumber = pageRequest.getPageNumber();
         int pageSize = pageRequest.getPageSize();
         Sort sort = pageRequest.getSort();
-        Sort.Order order = sort.getOrderFor("updatedAt");
+        Sort.Order order = sort.getOrderFor("id");
         String sortDirection;
         if (order != null) {
             sortDirection = order.getDirection() == Sort.Direction.ASC ? "asc" : "desc";
