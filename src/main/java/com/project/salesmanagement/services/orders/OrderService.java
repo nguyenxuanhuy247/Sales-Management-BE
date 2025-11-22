@@ -6,7 +6,10 @@ import com.project.salesmanagement.dtos.OrderDetailDTO;
 import com.project.salesmanagement.dtos.OrderWithDetailsDTO;
 import com.project.salesmanagement.exceptions.DataNotFoundException;
 import com.project.salesmanagement.models.*;
-import com.project.salesmanagement.repositories.*;
+import com.project.salesmanagement.repositories.OrderDetailRepository;
+import com.project.salesmanagement.repositories.OrderRepository;
+import com.project.salesmanagement.repositories.ProductRepository;
+import com.project.salesmanagement.repositories.UserRepository;
 import com.project.salesmanagement.responses.order.OrderResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -17,15 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class OrderService implements IOrderService{
+public class OrderService implements IOrderService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final CouponRepository couponRepository;
     private final OrderDetailRepository orderDetailRepository;
 
     private final ModelMapper modelMapper;
@@ -36,7 +39,7 @@ public class OrderService implements IOrderService{
         //tìm xem user'id có tồn tại ko
         User user = userRepository
                 .findById(orderDTO.getUserId())
-                .orElseThrow(() -> new DataNotFoundException("Cannot find user with id: "+orderDTO.getUserId()));
+                .orElseThrow(() -> new DataNotFoundException("Cannot find user with id: " + orderDTO.getUserId()));
         //convert orderDTO => Order
         //dùng thư viện Model Mapper
         // Tạo một luồng bảng ánh xạ riêng để kiểm soát việc ánh xạ
@@ -62,7 +65,7 @@ public class OrderService implements IOrderService{
         if (orderDTO.getVnpTxnRef() != null) {
             order.setVnpTxnRef(orderDTO.getVnpTxnRef());
         }
-        if(orderDTO.getShippingAddress() == null) {
+        if (orderDTO.getShippingAddress() == null) {
             order.setShippingAddress(orderDTO.getAddress());
         }
         // Tạo danh sách các đối tượng OrderDetail từ cartItems
@@ -90,25 +93,12 @@ public class OrderService implements IOrderService{
             orderDetails.add(orderDetail);
         }
 
-        //coupon
-        String couponCode = orderDTO.getCouponCode();
-        if (!couponCode.isEmpty()) {
-            Coupon coupon = couponRepository.findByCode(couponCode)
-                    .orElseThrow(() -> new IllegalArgumentException("Coupon not found"));
-
-            if (!coupon.isActive()) {
-                throw new IllegalArgumentException("Coupon is not active");
-            }
-
-            order.setCoupon(coupon);
-        } else {
-            order.setCoupon(null);
-        }
         // Lưu danh sách OrderDetail vào cơ sở dữ liệu
         orderDetailRepository.saveAll(orderDetails);
         orderRepository.save(order);
         return order;
     }
+
     @Transactional
     public Order updateOrderWithDetails(OrderWithDetailsDTO orderWithDetailsDTO) {
         modelMapper.typeMap(OrderWithDetailsDTO.class, Order.class)
@@ -130,6 +120,7 @@ public class OrderService implements IOrderService{
 
         return savedOrder;
     }
+
     @Override
     public Order getOrderById(Long orderId) {
         // Tìm theo ID
@@ -214,11 +205,12 @@ public class OrderService implements IOrderService{
     public void deleteOrder(Long orderId) {
         Order order = getOrderById(orderId);
         //no hard-delete, => please soft-delete
-        if(order != null) {
+        if (order != null) {
             order.setActive(false);
             orderRepository.save(order);
         }
     }
+
     @Override
     public List<OrderResponse> findByUserId(Long userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
@@ -229,6 +221,7 @@ public class OrderService implements IOrderService{
     public Page<Order> getOrdersByKeyword(String keyword, Pageable pageable) {
         return orderRepository.findByKeyword(keyword, pageable);
     }
+
     @Override
     @Transactional
     public Order updateOrderStatus(Long id, String status) throws DataNotFoundException, IllegalArgumentException {

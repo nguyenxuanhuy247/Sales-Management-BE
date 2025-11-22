@@ -2,7 +2,7 @@ package com.project.salesmanagement.controllers;
 
 import com.project.salesmanagement.components.LocalizationUtils;
 import com.project.salesmanagement.components.SecurityUtils;
-import com.project.salesmanagement.dtos.*;
+import com.project.salesmanagement.dtos.OrderDTO;
 import com.project.salesmanagement.models.Order;
 import com.project.salesmanagement.models.OrderStatus;
 import com.project.salesmanagement.models.User;
@@ -24,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -38,29 +39,29 @@ public class OrderController {
     // API Lấy danh sách đơn hàng
     @GetMapping("/get-orders-by-keyword")
     public ResponseEntity<ResponseObject> getOrdersByKeyword(
-      @RequestParam(defaultValue = "", required = false) String keyword,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int limit
+            @RequestParam(defaultValue = "", required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit
     ) {
         PageRequest pageRequest = PageRequest.of(
-          page, limit,
-          Sort.by("id").ascending()
+                page, limit,
+                Sort.by("id").ascending()
         );
         Page<OrderResponse> orderPage = orderService
-          .getOrdersByKeyword(keyword, pageRequest)
-          .map(OrderResponse::fromOrder);
+                .getOrdersByKeyword(keyword, pageRequest)
+                .map(OrderResponse::fromOrder);
 
         OrderListResponse response = OrderListResponse.builder()
-          .orders(orderPage.getContent())
-          .totalPages(orderPage.getTotalPages())
-          .currentPage(page)
-          .build();
+                .orders(orderPage.getContent())
+                .totalPages(orderPage.getTotalPages())
+                .currentPage(page)
+                .build();
 
         return ResponseEntity.ok().body(ResponseObject.builder()
-          .message("Get orders successfully")
-          .status(HttpStatus.OK)
-          .data(response)
-          .build());
+                .message("Get orders successfully")
+                .status(HttpStatus.OK)
+                .data(response)
+                .build());
     }
 
     // Lấy thông tin chi tiết đơn hàng
@@ -70,9 +71,9 @@ public class OrderController {
         Order existingOrder = orderService.getOrderById(orderId);
         OrderResponse orderResponse = OrderResponse.fromOrder(existingOrder);
         return ResponseEntity.ok(new ResponseObject(
-          "Get order successfully",
-          HttpStatus.OK,
-          orderResponse
+                "Get order successfully",
+                HttpStatus.OK,
+                orderResponse
         ));
     }
 
@@ -81,8 +82,8 @@ public class OrderController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> updateOrder(
-      @Valid @PathVariable long id,
-      @Valid @RequestBody OrderDTO orderDTO) throws Exception {
+            @Valid @PathVariable long id,
+            @Valid @RequestBody OrderDTO orderDTO) throws Exception {
         Order order = orderService.updateOrder(id, orderDTO);
         return ResponseEntity.ok(new ResponseObject("Update order successfully", HttpStatus.OK, order));
     }
@@ -94,16 +95,13 @@ public class OrderController {
         //xóa mềm => cập nhật trường active = false
         orderService.deleteOrder(id);
         String message = localizationUtils.getLocalizedMessage(
-          MessageKeys.DELETE_ORDER_SUCCESSFULLY, id);
+                MessageKeys.DELETE_ORDER_SUCCESSFULLY, id);
         return ResponseEntity.ok(
-          ResponseObject.builder()
-            .message(message)
-            .build()
+                ResponseObject.builder()
+                        .message(message)
+                        .build()
         );
     }
-
-
-    //=========================
 
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
@@ -111,7 +109,7 @@ public class OrderController {
             @Valid @RequestBody OrderDTO orderDTO,
             BindingResult result
     ) throws Exception {
-        if(result.hasErrors()) {
+        if (result.hasErrors()) {
             List<String> errorMessages = result.getFieldErrors()
                     .stream()
                     .map(FieldError::getDefaultMessage)
@@ -123,16 +121,17 @@ public class OrderController {
                             .build());
         }
         User loginUser = securityUtils.getLoggedInUser();
-        if(orderDTO.getUserId() == null) {
+        if (orderDTO.getUserId() == null) {
             orderDTO.setUserId(loginUser.getId());
         }
         Order orderResponse = orderService.createOrder(orderDTO);
         return ResponseEntity.ok(ResponseObject.builder()
-                        .message("Insert order successfully")
-                        .data(orderResponse)
-                        .status(HttpStatus.OK)
-                        .build());
+                .message("Insert order successfully")
+                .data(orderResponse)
+                .status(HttpStatus.OK)
+                .build());
     }
+
     @GetMapping("/user/{user_id}") // Thêm biến đường dẫn "user_id"
     //GET http://localhost:8088/api/v1/orders/user/4
     public ResponseEntity<ResponseObject> getOrders(@Valid @PathVariable("user_id") Long userId) {
@@ -140,14 +139,12 @@ public class OrderController {
         boolean isUserIdBlank = userId == null || userId <= 0;
         List<OrderResponse> orderResponses = orderService.findByUserId(isUserIdBlank ? loginUser.getId() : userId);
         return ResponseEntity.ok(ResponseObject
-                        .builder()
-                        .message("Get list of orders successfully")
-                        .data(orderResponses)
-                        .status(HttpStatus.OK)
-                        .build());
+                .builder()
+                .message("Get list of orders successfully")
+                .data(orderResponses)
+                .status(HttpStatus.OK)
+                .build());
     }
-
-
 
     @PutMapping("/cancel/{id}")
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -176,16 +173,8 @@ public class OrderController {
         }
         OrderDTO orderDTO = OrderDTO.builder()
                 .userId(order.getUser().getId())
-                /*
-                .email(order.getEmail())
-                .note(order.getNote())
-                .address(order.getAddress())
-                .fullName(order.getFullName())
-                .totalMoney(order.getTotalMoney())
-                .couponCode(order.getCoupon().getCode())
-                */
                 .status(OrderStatus.CANCELLED)
-                .build();;
+                .build();
 
         order = orderService.updateOrder(id, orderDTO);
         return ResponseEntity.ok(
@@ -194,20 +183,5 @@ public class OrderController {
                         HttpStatus.OK,
                         order)
         );
-    }
-
-    @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
-    public ResponseEntity<ResponseObject> updateOrderStatus(
-            @Valid @PathVariable Long id,
-            @RequestParam String status) throws Exception {
-        // Gọi service để cập nhật trạng thái
-        Order updatedOrder = orderService.updateOrderStatus(id, status);
-        // Trả về phản hồi thành công
-        return ResponseEntity.ok(ResponseObject.builder()
-                .message("Order status updated successfully")
-                .status(HttpStatus.OK)
-                .data(OrderResponse.fromOrder(updatedOrder))
-                .build());
     }
 }

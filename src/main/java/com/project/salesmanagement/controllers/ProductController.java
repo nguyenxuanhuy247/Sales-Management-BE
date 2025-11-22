@@ -1,14 +1,13 @@
 package com.project.salesmanagement.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.javafaker.Faker;
 import com.project.salesmanagement.components.LocalizationUtils;
-import com.project.salesmanagement.components.SecurityUtils;
 import com.project.salesmanagement.dtos.ProductDTO;
 import com.project.salesmanagement.dtos.ProductImageDTO;
+import com.project.salesmanagement.exceptions.DataNotFoundException;
+import com.project.salesmanagement.exceptions.InvalidParamException;
 import com.project.salesmanagement.models.Product;
 import com.project.salesmanagement.models.ProductImage;
-import com.project.salesmanagement.models.User;
 import com.project.salesmanagement.responses.ResponseObject;
 import com.project.salesmanagement.responses.product.ProductListResponse;
 import com.project.salesmanagement.responses.product.ProductResponse;
@@ -49,124 +48,115 @@ public class ProductController {
     private final IProductService productService;
     private final LocalizationUtils localizationUtils;
     private final IProductRedisService productRedisService;
-    private final SecurityUtils securityUtils;
 
     // Lấy danh sách sản phẩm
-    // GET http://localhost:8088/v1/api/products
     @GetMapping("")
     public ResponseEntity<ResponseObject> getProducts(
-      @RequestParam(defaultValue = "") String keyword,
-      @RequestParam(defaultValue = "0", name = "category_id") Long categoryId,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int limit
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0", name = "category_id") Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit
     ) throws JsonProcessingException {
         int totalPages = 0;
-        //productRedisService.clear();
-        // Tạo Pageable từ thông tin trang và số bản ghi, có thể  sắp xếp theo id : Sort.by("updatedAt").ascending()
         PageRequest pageRequest = PageRequest.of(page, limit, Sort.by("id").ascending());
 
-        logger.info(String.format("keyword = %s, category_id = %d, page = %d," +
-          " limit = %d", keyword, categoryId, page, limit));
-
         List<ProductResponse> productResponses = productRedisService
-          .getAllProducts(keyword, categoryId, pageRequest);
+                .getAllProducts(keyword, categoryId, pageRequest);
 
         if (productResponses != null && !productResponses.isEmpty()) {
             totalPages = productResponses.get(0).getTotalPages();
         }
         if (productResponses == null) {
             Page<ProductResponse> productPage = productService
-              .getAllProducts(keyword, categoryId, pageRequest);
-            // Lấy tổng số trang
+                    .getAllProducts(keyword, categoryId, pageRequest);
             totalPages = productPage.getTotalPages();
             productResponses = productPage.getContent();
-            // Bổ sung totalPages vào các đối tượng ProductResponse
             for (ProductResponse product : productResponses) {
                 product.setTotalPages(totalPages);
             }
             productRedisService.saveAllProducts(
-              productResponses,
-              keyword,
-              categoryId,
-              pageRequest
+                    productResponses,
+                    keyword,
+                    categoryId,
+                    pageRequest
             );
         }
         ProductListResponse productListResponse = ProductListResponse
-          .builder()
-          .products(productResponses)
-          .totalPages(totalPages)
-          .build();
+                .builder()
+                .products(productResponses)
+                .totalPages(totalPages)
+                .build();
 
         return ResponseEntity.ok().body(
-          ResponseObject.builder()
-            .message("Get products successfully")
-            .status(HttpStatus.OK)
-            .data(productListResponse)
-            .build()
+                ResponseObject.builder()
+                        .message("Get products successfully")
+                        .status(HttpStatus.OK)
+                        .data(productListResponse)
+                        .build()
         );
     }
 
     // Lấy thông tin chi tiết 1 sản phẩm
-    // GET http://localhost:8088/api/v1/products/6
     @GetMapping("/{id}")
     public ResponseEntity<ResponseObject> getProductById(
-      @PathVariable("id") Long productId
+            @PathVariable("id") Long productId
     ) throws Exception {
         Product existingProduct = productService.getProductById(productId);
 
         return ResponseEntity.ok(
-          ResponseObject.builder()
-            .data(ProductResponse.fromProduct(existingProduct))
-            .message("Get detail product successfully")
-            .status(HttpStatus.OK)
-            .build()
+                ResponseObject.builder()
+                        .data(ProductResponse.fromProduct(existingProduct))
+                        .message("Get detail product successfully")
+                        .status(HttpStatus.OK)
+                        .build()
         );
     }
 
-    /// POST http://localhost:8088/v1/api/products
+    // Tạo mới sản phấm
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseObject> createProduct(
-      @Valid @RequestBody ProductDTO productDTO,
-      BindingResult result
+            @Valid @RequestBody ProductDTO productDTO,
+            BindingResult result
     ) throws Exception {
         if (result.hasErrors()) {
             List<String> errorMessages = result.getFieldErrors()
-              .stream()
-              .map(FieldError::getDefaultMessage)
-              .toList();
+                    .stream()
+                    .map(FieldError::getDefaultMessage)
+                    .toList();
             return ResponseEntity.badRequest().body(
-              ResponseObject.builder()
-                .message(String.join("; ", errorMessages))
-                .status(HttpStatus.BAD_REQUEST)
-                .build()
+                    ResponseObject.builder()
+                            .message(String.join("; ", errorMessages))
+                            .status(HttpStatus.BAD_REQUEST)
+                            .build()
             );
         }
         Product newProduct = productService.createProduct(productDTO);
         return ResponseEntity.ok(
-          ResponseObject.builder()
-            .message("Create new product successfully")
-            .status(HttpStatus.CREATED)
-            .data(newProduct)
-            .build());
+                ResponseObject.builder()
+                        .message("Create new product successfully")
+                        .status(HttpStatus.CREATED)
+                        .data(newProduct)
+                        .build());
     }
 
+    // Upload ảnh sản phẩm
     @PostMapping(value = "uploads/{id}",
-      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     //POST http://localhost:8088/v1/api/products
     public ResponseEntity<ResponseObject> uploadImages(
-      @PathVariable("id") Long productId,
-      @ModelAttribute("files") List<MultipartFile> files
+            @PathVariable("id") Long productId,
+            @ModelAttribute("files") List<MultipartFile> files
     ) throws Exception {
         Product existingProduct = productService.getProductById(productId);
         files = files == null ? new ArrayList<MultipartFile>() : files;
         if (files.size() > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
             return ResponseEntity.badRequest().body(
-              ResponseObject.builder()
-                .message(localizationUtils
-                  .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_MAX_5))
-                .build()
+                    ResponseObject.builder()
+                            .message(localizationUtils
+                                    .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_MAX_5))
+                            .build()
             );
         }
         List<ProductImage> productImages = new ArrayList<>();
@@ -177,40 +167,41 @@ public class ProductController {
             // Kiểm tra kích thước file và định dạng
             if (file.getSize() > 10 * 1024 * 1024) { // Kích thước > 10MB
                 return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-                  .body(ResponseObject.builder()
-                    .message(localizationUtils
-                      .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_LARGE))
-                    .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                    .build());
+                        .body(ResponseObject.builder()
+                                .message(localizationUtils
+                                        .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_LARGE))
+                                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                                .build());
             }
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-                  .body(ResponseObject.builder()
-                    .message(localizationUtils
-                      .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE))
-                    .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-                    .build());
+                        .body(ResponseObject.builder()
+                                .message(localizationUtils
+                                        .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE))
+                                .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                                .build());
             }
             // Lưu file và cập nhật thumbnail trong DTO
             String filename = FileUtils.storeFile(file);
             //lưu vào đối tượng product trong DB
             ProductImage productImage = productService.createProductImage(
-              existingProduct.getId(),
-              ProductImageDTO.builder()
-                .imageUrl(filename)
-                .build()
+                    existingProduct.getId(),
+                    ProductImageDTO.builder()
+                            .imageUrl(filename)
+                            .build()
             );
             productImages.add(productImage);
         }
 
         return ResponseEntity.ok().body(ResponseObject.builder()
-          .message("Upload image successfully")
-          .status(HttpStatus.CREATED)
-          .data(productImages)
-          .build());
+                .message("Upload image successfully")
+                .status(HttpStatus.CREATED)
+                .data(productImages)
+                .build());
     }
 
+    // Xem ảnh sản phẩm
     @GetMapping("/images/{imageName}")
     public ResponseEntity<?> viewImage(@PathVariable String imageName) {
         try {
@@ -219,13 +210,13 @@ public class ProductController {
 
             if (resource.exists()) {
                 return ResponseEntity.ok()
-                  .contentType(MediaType.IMAGE_JPEG)
-                  .body(resource);
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(resource);
             } else {
                 logger.info(imageName + " not found");
                 return ResponseEntity.ok()
-                  .contentType(MediaType.IMAGE_JPEG)
-                  .body(new UrlResource(Paths.get("uploads/notfound.jpeg").toUri()));
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(new UrlResource(Paths.get("uploads/notfound.jpeg").toUri()));
                 //return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
@@ -234,119 +225,50 @@ public class ProductController {
         }
     }
 
+    // Lấy nhiều sản phẩm theo danh sách id
     @GetMapping("/by-ids")
     public ResponseEntity<ResponseObject> getProductsByIds(@RequestParam("ids") String ids) {
         //eg: 1,3,5,7
         // Tách chuỗi ids thành một mảng các số nguyên
         List<Long> productIds = Arrays.stream(ids.split(","))
-          .map(Long::parseLong)
-          .collect(Collectors.toList());
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
         List<Product> products = productService.findProductsByIds(productIds);
         return ResponseEntity.ok(ResponseObject.builder()
-          .data(products.stream().map(product -> ProductResponse.fromProduct(product)).toList())
-          .message("Get products successfully")
-          .status(HttpStatus.OK)
-          .build()
+                .data(products.stream().map(product -> ProductResponse.fromProduct(product)).toList())
+                .message("Get products successfully")
+                .status(HttpStatus.OK)
+                .build()
         );
     }
 
+    // Xóa sản phẩm
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(security = {@SecurityRequirement(name = "bearer-key")})
-    public ResponseEntity<ResponseObject> deleteProduct(@PathVariable long id) {
+    public ResponseEntity<ResponseObject> deleteProduct(@PathVariable long id) throws DataNotFoundException, InvalidParamException {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ResponseObject.builder()
-          .data(null)
-          .message(String.format("Product with id = %d deleted successfully", id))
-          .status(HttpStatus.OK)
-          .build());
+                .data(null)
+                .message(String.format("Product with id = %d deleted successfully", id))
+                .status(HttpStatus.OK)
+                .build());
     }
 
-    //@PostMapping("/generateFakeProducts")
-    private ResponseEntity<ResponseObject> generateFakeProducts() throws Exception {
-        Faker faker = new Faker();
-        for (int i = 0; i < 1_000_000; i++) {
-            String productName = faker.commerce().productName();
-            if (productService.existsByName(productName)) {
-                continue;
-            }
-            ProductDTO productDTO = ProductDTO.builder()
-              .name(productName)
-              .price((float) faker.number().numberBetween(10, 90_000_000))
-              .description(faker.lorem().sentence())
-              .thumbnail("")
-              .categoryId((long) faker.number().numberBetween(2, 5))
-              .build();
-            productService.createProduct(productDTO);
-        }
-        return ResponseEntity.ok(ResponseObject.builder()
-          .message("Insert fake products succcessfully")
-          .data(null)
-          .status(HttpStatus.OK)
-          .build());
-    }
-
-    //update a product
+    // Cập nhật sản phẩm
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     //@SecurityRequirement(name="bearer-key")
     @Operation(security = {@SecurityRequirement(name = "bearer-key")})
     public ResponseEntity<ResponseObject> updateProduct(
-      @PathVariable long id,
-      @RequestBody ProductDTO productDTO
+            @PathVariable long id,
+            @RequestBody ProductDTO productDTO
     ) throws Exception {
         Product updatedProduct = productService.updateProduct(id, productDTO);
         return ResponseEntity.ok(ResponseObject.builder()
-          .data(updatedProduct)
-          .message("Update product successfully")
-          .status(HttpStatus.OK)
-          .build());
-    }
-
-    @PostMapping("/like/{productId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
-    public ResponseEntity<ResponseObject> likeProduct(@PathVariable Long productId) throws Exception {
-        User loginUser = securityUtils.getLoggedInUser();
-        Product likedProduct = productService.likeProduct(loginUser.getId(), productId);
-        return ResponseEntity.ok(ResponseObject.builder()
-          .data(ProductResponse.fromProduct(likedProduct))
-          .message("Like product successfully")
-          .status(HttpStatus.OK)
-          .build());
-    }
-
-    @PostMapping("/unlike/{productId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
-    public ResponseEntity<ResponseObject> unlikeProduct(@PathVariable Long productId) throws Exception {
-        User loginUser = securityUtils.getLoggedInUser();
-        Product unlikedProduct = productService.unlikeProduct(loginUser.getId(), productId);
-        return ResponseEntity.ok(ResponseObject.builder()
-          .data(ProductResponse.fromProduct(unlikedProduct))
-          .message("Unlike product successfully")
-          .status(HttpStatus.OK)
-          .build());
-    }
-
-    @PostMapping("/favorite-products")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
-    public ResponseEntity<ResponseObject> findFavoriteProductsByUserId() throws Exception {
-        User loginUser = securityUtils.getLoggedInUser();
-        List<ProductResponse> favoriteProducts = productService.findFavoriteProductsByUserId(loginUser.getId());
-        return ResponseEntity.ok(ResponseObject.builder()
-          .data(favoriteProducts)
-          .message("Favorite products retrieved successfully")
-          .status(HttpStatus.OK)
-          .build());
-    }
-
-    @PostMapping("/generateFakeLikes")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ResponseObject> generateFakeLikes() throws Exception {
-        productService.generateFakeLikes();
-        return ResponseEntity.ok(ResponseObject.builder()
-          .message("Insert fake likes succcessfully")
-          .data(null)
-          .status(HttpStatus.OK)
-          .build());
+                .data(updatedProduct)
+                .message("Update product successfully")
+                .status(HttpStatus.OK)
+                .build());
     }
 }

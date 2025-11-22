@@ -11,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
-public class UserLoginDTO extends SocialAccountDTO {
+public class UserLoginDTO {
     @JsonProperty("phone_number")
     private String phoneNumber;
 
@@ -46,6 +46,7 @@ public class UserLoginDTO extends SocialAccountDTO {
     public boolean isPasswordBlank() {
         return password == null || password.trim().isEmpty();
     }
+
     // Kiểm tra facebookAccountId có hợp lệ không
     public boolean isFacebookAccountIdValid() {
         return facebookAccountId != null && !facebookAccountId.isEmpty();

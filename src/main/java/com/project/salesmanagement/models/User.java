@@ -1,6 +1,5 @@
 package com.project.salesmanagement.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -66,11 +65,12 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
-        authorityList.add(new SimpleGrantedAuthority("ROLE_"+getRole().getName().toUpperCase()));
+        authorityList.add(new SimpleGrantedAuthority("ROLE_" + getRole().getName().toUpperCase()));
         //authorityList.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
         return authorityList;
     }
+
     @Override
     public String getUsername() {
         if (phoneNumber != null && !phoneNumber.isEmpty()) {
@@ -107,13 +107,10 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     public Map<String, Object> getAttributes() {
         return new HashMap<String, Object>();
     }
+
     @Override
     public String getName() {
         return getAttribute("name");
     }
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-
-    @JsonManagedReference
-    private List<Comment> comments = new ArrayList<>();
 }
 

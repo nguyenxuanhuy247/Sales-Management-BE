@@ -1,10 +1,8 @@
 package com.project.salesmanagement.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -14,9 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-//Event-driven approach with Spring Data JPA
 @EntityListeners(ProductListener.class)
-public class Product extends BaseEntity{
+public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,19 +38,4 @@ public class Product extends BaseEntity{
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)
     private List<ProductImage> productImages;
-
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private List<Comment> comments = new ArrayList<>();
-
-
-    @OneToMany(mappedBy = "product",
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY)
-    private List<Favorite> favorites = new ArrayList<>();
 }
-/*
-SELECT products.* FROM products LEFT JOIN product_images ON products.id = product_images.product_id WHERE product_images.product_id IS NULL AND category_id=4 LIMIT 10;
-select * from products where category_id=4;
-* */

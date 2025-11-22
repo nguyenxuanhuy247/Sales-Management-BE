@@ -18,32 +18,37 @@ public class CategoryService implements ICategoryService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
 
+    // Tạo mới danh mục
     @Override
     @Transactional
     public Category createCategory(CategoryDTO categoryDTO) {
         Category newCategory = Category
-          .builder()
-          .name(categoryDTO.getName())
-          .build();
+                .builder()
+                .name(categoryDTO.getName())
+                .build();
         return categoryRepository.save(newCategory);
     }
 
+    // Lấy danh mục theo ID
     @Override
     public Category getCategoryById(long id) {
         return categoryRepository.findById(id)
-          .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh " +
+                        "mục"));
     }
 
+    // Lấy tất cả danh mục
     @Override
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
 
+    // Cập nhật danh mục
     @Override
     @Transactional
     public Category updateCategory(
-      long categoryId,
-      CategoryDTO categoryDTO
+            long categoryId,
+            CategoryDTO categoryDTO
     ) {
         Category existingCategory = getCategoryById(categoryId);
         existingCategory.setName(categoryDTO.getName());
@@ -51,15 +56,17 @@ public class CategoryService implements ICategoryService {
         return existingCategory;
     }
 
+    // Xóa danh mục
     @Override
     @Transactional
     public Category deleteCategory(long id) throws Exception {
         Category category = categoryRepository.findById(id)
-          .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
 
         List<Product> products = productRepository.findByCategory(category);
         if (!products.isEmpty()) {
-            throw new IllegalStateException("Cannot delete category with associated products");
+            throw new IllegalStateException("Không thể xóa danh mục đang gắn " +
+                    "với sản phẩm");
         } else {
             categoryRepository.deleteById(id);
             return category;

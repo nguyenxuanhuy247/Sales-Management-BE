@@ -19,21 +19,11 @@ public interface IProductService {
 
     Product updateProduct(long id, ProductDTO productDTO) throws Exception;
 
-    void deleteProduct(long id);
-
-    boolean existsByName(String name);
+    void deleteProduct(long id) throws com.project.salesmanagement.exceptions.DataNotFoundException, com.project.salesmanagement.exceptions.InvalidParamException;
 
     ProductImage createProductImage(
             Long productId,
             ProductImageDTO productImageDTO) throws Exception;
 
     List<Product> findProductsByIds(List<Long> productIds);
-
-    Product likeProduct(Long userId, Long productId) throws Exception;
-
-    Product unlikeProduct(Long userId, Long productId) throws Exception;
-
-    List<ProductResponse> findFavoriteProductsByUserId(Long userId) throws Exception;
-
-    void generateFakeLikes() throws Exception;
 }
