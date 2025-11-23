@@ -67,7 +67,7 @@ public class Order {
     private Boolean active;//thuộc về admin
 
     @Column(name = "vnp_txn_ref", nullable = true)
-    private String vnpTxnRef; // Order ID của VNPay trả về
+    private String vnpTxnRef;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference

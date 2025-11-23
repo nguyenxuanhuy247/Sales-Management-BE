@@ -1,7 +1,7 @@
 package com.project.salesmanagement.controllers;
 
 import com.project.salesmanagement.components.LocalizationUtils;
-import com.project.salesmanagement.dtos.*;
+import com.project.salesmanagement.dtos.OrderDetailDTO;
 import com.project.salesmanagement.exceptions.DataNotFoundException;
 import com.project.salesmanagement.models.OrderDetail;
 import com.project.salesmanagement.responses.ResponseObject;
@@ -12,11 +12,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -25,11 +25,12 @@ import java.util.List;
 public class OrderDetailController {
     private final OrderDetailService orderDetailService;
     private final LocalizationUtils localizationUtils;
+
     //Thêm mới 1 order detail
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> createOrderDetail(
-            @Valid  @RequestBody OrderDetailDTO orderDetailDTO) throws Exception {
+            @Valid @RequestBody OrderDetailDTO orderDetailDTO) throws Exception {
         OrderDetail newOrderDetail = orderDetailService.createOrderDetail(orderDetailDTO);
         OrderDetailResponse orderDetailResponse = OrderDetailResponse.fromOrderDetail(newOrderDetail);
         return ResponseEntity.ok().body(
@@ -40,6 +41,7 @@ public class OrderDetailController {
                         .build()
         );
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getOrderDetail(
             @Valid @PathVariable("id") Long id) throws DataNotFoundException {
@@ -53,6 +55,7 @@ public class OrderDetailController {
                         .build()
         );
     }
+
     //lấy ra danh sách các order_details của 1 order nào đó
     @GetMapping("/order/{orderId}")
     public ResponseEntity<ResponseObject> getOrderDetails(
@@ -71,22 +74,24 @@ public class OrderDetailController {
                         .build()
         );
     }
+
     @PutMapping("/{id}")
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")})
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> updateOrderDetail(
             @Valid @PathVariable("id") Long id,
-            @RequestBody OrderDetailDTO orderDetailDTO) throws DataNotFoundException, Exception {
+            @RequestBody OrderDetailDTO orderDetailDTO) throws Exception {
         OrderDetail orderDetail = orderDetailService.updateOrderDetail(id, orderDetailDTO);
         return ResponseEntity.ok().body(ResponseObject
-                        .builder()
-                        .data(orderDetail)
-                        .message("Update order detail successfully")
-                        .status(HttpStatus.OK)
+                .builder()
+                .data(orderDetail)
+                .message("Update order detail successfully")
+                .status(HttpStatus.OK)
                 .build());
     }
+
     @DeleteMapping("/{id}")
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(security = {@SecurityRequirement(name = "bearer-key")})
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     public ResponseEntity<ResponseObject> deleteOrderDetail(
             @Valid @PathVariable("id") Long id) {

@@ -16,11 +16,6 @@ import java.util.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-/*
-ALTER TABLE users
-  MODIFY facebook_account_id VARCHAR(255),
-  MODIFY google_account_id VARCHAR(255);
-* */
 public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,14 +27,12 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     @Column(name = "phone_number", length = 10, nullable = true)
     private String phoneNumber;
 
-    // ALTER TABLE users ADD COLUMN email VARCHAR(255) DEFAULT '';
     @Column(name = "email", length = 255, nullable = true)
     private String email;
 
     @Column(name = "address", length = 200)
     private String address;
 
-    //ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) DEFAULT '';
     @Column(name = "profile_image", length = 255)
     private String profileImage;
 
@@ -66,7 +59,6 @@ public class User extends BaseEntity implements UserDetails, OAuth2User {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
         authorityList.add(new SimpleGrantedAuthority("ROLE_" + getRole().getName().toUpperCase()));
-        //authorityList.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
         return authorityList;
     }

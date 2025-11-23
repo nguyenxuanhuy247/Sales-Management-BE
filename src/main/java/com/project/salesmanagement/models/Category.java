@@ -2,10 +2,10 @@ package com.project.salesmanagement.models;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+ 
 @Entity
 @Table(name = "categories")
-@Data//toString
+@Data
 @Getter
 @Setter
 @AllArgsConstructor

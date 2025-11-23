@@ -10,18 +10,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.net.InetAddress;
+import java.util.List;
 
 @RestController
 @RequestMapping("${api.prefix}/healthcheck")
 @AllArgsConstructor
 public class HealthCheckController {
     private final CategoryService categoryService;
+
     @GetMapping("/health")
-    public ResponseEntity<ResponseObject> healthCheck() throws Exception{
+    public ResponseEntity<ResponseObject> healthCheck() throws Exception {
         List<Category> categories = categoryService.getAllCategories();
-        // Get the computer name
+
         String computerName = InetAddress.getLocalHost().getHostName();
         return ResponseEntity.ok(ResponseObject
                 .builder()

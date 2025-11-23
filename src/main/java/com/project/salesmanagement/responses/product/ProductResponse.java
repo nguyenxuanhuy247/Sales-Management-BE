@@ -1,5 +1,6 @@
 package com.project.salesmanagement.responses.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.project.salesmanagement.models.Product;
 import com.project.salesmanagement.models.ProductImage;
@@ -14,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductResponse extends BaseResponse {
     private Long id;
     private String name;

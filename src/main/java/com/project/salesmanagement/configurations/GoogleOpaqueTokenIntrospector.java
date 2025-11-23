@@ -2,7 +2,6 @@ package com.project.salesmanagement.configurations;
 
 import com.project.salesmanagement.models.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.server.resource.introspection.OAuth2IntrospectionAuthenticatedPrincipal;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
@@ -19,7 +18,7 @@ public class GoogleOpaqueTokenIntrospector implements OpaqueTokenIntrospector {
     @Override
     public OAuth2AuthenticatedPrincipal introspect(String token) {
         User userInfo = userInfoClient.get()
-                .uri( uriBuilder -> uriBuilder
+                .uri(uriBuilder -> uriBuilder
                         .path("/oauth2/v3/userinfo")
                         .queryParam("access_token", token)
                         .build())

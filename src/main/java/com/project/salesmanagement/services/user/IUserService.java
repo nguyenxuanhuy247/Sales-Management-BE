@@ -7,7 +7,7 @@ import com.project.salesmanagement.exceptions.InvalidPasswordException;
 import com.project.salesmanagement.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
+ 
 public interface IUserService {
     String login(UserLoginDTO userLoginDT) throws Exception;
 

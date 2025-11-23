@@ -22,11 +22,11 @@ public class ProductRedisService implements IProductRedisService {
     private boolean useRedisCache;
 
     /**
+     * @return Trả về một chuỗi key
      * @usageNotes hàm này dùng để tạo ra một chuỗi key duy nhất dựa trên các tham số truy vấn nhằm lưu và truy xuất dữ liệu từ Redis cache.
      * @params keyword : Chuôi tìm kiếm sản phẩm.
      * @params categoryId : ID của danh mục sản phẩm.
      * @params pageRequest : Thông tin phân trang bao gồm số trang, kích thước trang và hướng sắp xếp.
-     * @return Trả về một chuỗi key
      */
     private String getKeyFrom(String keyword, Long categoryId, PageRequest pageRequest) {
         int pageNumber = pageRequest.getPageNumber();
@@ -50,9 +50,9 @@ public class ProductRedisService implements IProductRedisService {
     public List<ProductResponse> getAllProducts(String keyword,
                                                 Long categoryId,
                                                 PageRequest pageRequest
-    /** JsonProcessingException được sử dụng vì phương thức readValue và writeValueAsString của ObjectMapper
-     * có thể phát sinh lỗi khi chuyển đổi giữa JSON và Java object. Exception này giúp bắt và xử lý
-     * các lỗi liên quan đến việc parse hoặc serialize dữ liệu JSON. */
+                                                /** JsonProcessingException được sử dụng vì phương thức readValue và writeValueAsString của ObjectMapper
+                                                 * có thể phát sinh lỗi khi chuyển đổi giữa JSON và Java object. Exception này giúp bắt và xử lý
+                                                 * các lỗi liên quan đến việc parse hoặc serialize dữ liệu JSON. */
     ) throws JsonProcessingException {
         if (!useRedisCache) {
             return null;
@@ -70,7 +70,7 @@ public class ProductRedisService implements IProductRedisService {
     }
 
     @Override
-    //save to Redis
+    // Lưu vào Redis
     public void saveAllProducts(List<ProductResponse> productResponses, String keyword, Long categoryId, PageRequest pageRequest) throws JsonProcessingException {
         String key = this.getKeyFrom(keyword, categoryId, pageRequest);
         String json = redisObjectMapper.writeValueAsString(productResponses);

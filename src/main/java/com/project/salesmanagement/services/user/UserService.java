@@ -85,7 +85,7 @@ public class UserService implements IUserService {
         if (updatedUserDTO.getDateOfBirth() != null) {
             existingUser.setDateOfBirth(updatedUserDTO.getDateOfBirth());
         }
-        
+
         // Update the password if it is provided in the DTO
         if (updatedUserDTO.getPassword() != null
                 && !updatedUserDTO.getPassword().isEmpty()) {

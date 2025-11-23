@@ -1,7 +1,5 @@
 package com.project.salesmanagement.models;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
@@ -10,14 +8,14 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data//toString
+@Data
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @MappedSuperclass
 
-public class BaseEntity{
+public class BaseEntity {
     @Column(name = "created_at")
     //@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private LocalDateTime createdAt;

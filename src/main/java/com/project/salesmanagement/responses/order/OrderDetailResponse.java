@@ -11,7 +11,7 @@ import lombok.*;
 @Builder
 public class OrderDetailResponse {
     private Long id;
-
+ 
     @JsonProperty("order_id")
     private Long orderId;
 

@@ -17,25 +17,23 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class TokenService implements ITokenService{
+public class TokenService implements ITokenService {
     private static final int MAX_TOKENS = 3;
+    private final TokenRepository tokenRepository;
+    private final JwtTokenUtils jwtTokenUtil;
     @Value("${jwt.expiration}")
     private int expiration; //save to an environment variable
-
     @Value("${jwt.expiration-refresh-token}")
     private int expirationRefreshToken;
 
-    private final TokenRepository tokenRepository;
-    private final JwtTokenUtils jwtTokenUtil;
-
     @Transactional
     @Override
-    public Token refreshToken(String refreshToken, User user) throws Exception{
+    public Token refreshToken(String refreshToken, User user) throws Exception {
         Token existingToken = tokenRepository.findByRefreshToken(refreshToken);
-        if(existingToken == null) {
+        if (existingToken == null) {
             throw new DataNotFoundException("Refresh token does not exist");
         }
-        if(existingToken.getRefreshExpirationDate().compareTo(LocalDateTime.now()) < 0){
+        if (existingToken.getRefreshExpirationDate().isBefore(java.time.LocalDateTime.now())) {
             tokenRepository.delete(existingToken);
             throw new ExpiredTokenException("Refresh token is expired");
         }
@@ -47,9 +45,10 @@ public class TokenService implements ITokenService{
         existingToken.setRefreshExpirationDate(LocalDateTime.now().plusSeconds(expirationRefreshToken));
         return existingToken;
     }
+
     @Transactional
     @Override
-    public Token addToken(User user,String token, boolean isMobileDevice) {
+    public Token addToken(User user, String token, boolean isMobileDevice) {
         List<Token> userTokens = tokenRepository.findByUser(user);
         int tokenCount = userTokens.size();
         // Số lượng token vượt quá giới hạn, xóa một token cũ

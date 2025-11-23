@@ -30,7 +30,7 @@ public class UserResponse {
     private boolean active;
 
     @JsonProperty("date_of_birth")
-    private Date dateOfBirth;   
+    private Date dateOfBirth;
 
     @JsonProperty("facebook_account_id")
     private String facebookAccountId;
@@ -40,6 +40,7 @@ public class UserResponse {
 
     @JsonProperty("role")
     private com.project.salesmanagement.models.Role role;
+
     public static UserResponse fromUser(com.project.salesmanagement.models.User user) {
         return UserResponse.builder()
                 .id(user.getId())

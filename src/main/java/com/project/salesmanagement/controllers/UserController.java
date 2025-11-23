@@ -148,7 +148,6 @@ public class UserController {
         // Tạo Pageable từ thông tin trang và giới hạn
         PageRequest pageRequest = PageRequest.of(
                 page, limit,
-                //Sort.by("createdAt").descending()
                 Sort.by("id").ascending()
         );
         Page<UserResponse> userPage = userService.findAll(keyword, pageRequest)
@@ -258,7 +257,6 @@ public class UserController {
                             .build());
         }
 
-        // Check file type
         if (!FileUtils.isImageFile(file)) {
             return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                     .body(ResponseObject.builder()
@@ -267,12 +265,10 @@ public class UserController {
                             .build());
         }
 
-        // Store file and get filename
         String oldFileName = loginUser.getProfileImage();
         String imageName = FileUtils.storeFile(file);
 
         userService.changeProfileImage(loginUser.getId(), imageName);
-        // Delete old file if exists
         if (!StringUtils.isEmpty(oldFileName)) {
             FileUtils.deleteFile(oldFileName);
         }
@@ -298,7 +294,6 @@ public class UserController {
                 return ResponseEntity.ok()
                         .contentType(MediaType.IMAGE_JPEG)
                         .body(new UrlResource(Paths.get("uploads/default-profile-image.jpeg").toUri()));
-                //return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

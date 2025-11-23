@@ -22,6 +22,7 @@ public class ValidationUtils {
         // Match the input phone number with the pattern
         return phoneNumber != null && pattern.matcher(phoneNumber).matches();
     }
+
     public static boolean isValidPassword(String password) {
         // Password validation: At least 3 characters
         return password != null && password.length() >= 3;

@@ -1,9 +1,10 @@
 package com.project.salesmanagement.responses;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.http.HttpStatus;
 
-@Data//toString
+@Data
 @Getter
 @Setter
 @AllArgsConstructor

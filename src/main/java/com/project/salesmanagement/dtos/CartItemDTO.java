@@ -1,6 +1,6 @@
 package com.project.salesmanagement.dtos;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Column;
 import lombok.*;
 
 @Data

@@ -1,4 +1,5 @@
 package com.project.salesmanagement.responses.user;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

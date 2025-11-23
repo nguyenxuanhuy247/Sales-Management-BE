@@ -21,10 +21,10 @@ import java.time.format.DateTimeFormatter;
 @Configuration
 public class RedisConfig {
     private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
-    @Value("${spring.data.redis.host}") // Read 'spring.data.redis.host' property from application.yml
+    @Value("${spring.data.redis.host}")
     private String redisHost;
 
-    @Value("${spring.data.redis.port}") // Read 'spring.data.redis.port' property from application.yml
+    @Value("${spring.data.redis.port}")
     private int redisPort;
 
     @Bean
@@ -34,10 +34,9 @@ public class RedisConfig {
                 new RedisStandaloneConfiguration(redisHost, redisPort);
         return new LettuceConnectionFactory(configuration);
     }
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate()
 
-    {
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
 
@@ -49,6 +48,7 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+
     @Bean
     public ObjectMapper redisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();

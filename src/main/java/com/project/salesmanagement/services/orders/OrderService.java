@@ -140,11 +140,7 @@ public class OrderService implements IOrderService {
         User existingUser = userRepository.findById(
                 orderDTO.getUserId()).orElseThrow(() ->
                 new DataNotFoundException("Cannot find user with id: " + id));
-        /*
-        modelMapper.typeMap(OrderDTO.class, Order.class)
-                .addMappings(mapper -> mapper.skip(Order::setId));
-        modelMapper.map(orderDTO, order);
-         */
+       
         // Setting user
         if (orderDTO.getUserId() != null) {
             User user = new User();

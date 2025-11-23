@@ -1,8 +1,9 @@
 package com.project.salesmanagement.dtos;
+
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
-@Data//toString
+@Data
 @Getter
 @Setter
 @AllArgsConstructor
